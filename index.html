@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ro"><head><meta charset="utf-8">
+<title>FOI INTERACTIVE – CRED ÎN EDUCAȚIE</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style id="pageRule">@page{size:A4 portrait;margin:0}</style>
+<style>
+:root{--ink:#1f3a5f;--acc:#c62828;--bg:#f3f5f9}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{text-align:center;padding:20px 16px 6px}
+h1{margin:0;font-size:1.6rem;letter-spacing:.04em}
+header p{margin:6px 0 0;color:#5a6b85}
+.bar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:8px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:2px solid var(--ink);background:#fff;color:var(--ink);padding:12px 22px;font-weight:700}
+button:hover{background:#e6ecf5}
+button.on{background:var(--ink);color:#fff}
+.sub button{padding:8px 18px;font-size:.9rem}
+#print{background:var(--acc);border-color:var(--acc);color:#fff}
+.status{text-align:center;font-size:.9rem;color:#5a6b85;padding:4px}
+#view{display:flex;justify-content:center;padding:14px 8px 40px;overflow:auto}
+#wrap{flex:none;position:relative;box-shadow:0 2px 14px #0003;background:#fff}
+#sheet{position:absolute;left:0;top:0;transform-origin:0 0;background:#fff;overflow:hidden}
+#sheet svg{display:block}
+#red{position:absolute;left:14.825mm;top:0;bottom:0;width:.35mm;background:#d40000}
+*{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+@media print{
+ header,.bar,.status{display:none!important}
+ html,body{background:#fff;margin:0;padding:0}
+ #view{display:block;padding:0;overflow:visible}
+ #wrap{position:static!important;width:auto!important;height:auto!important;box-shadow:none}
+ #sheet{position:relative!important;transform:none!important;box-shadow:none}
+}
+</style></head><body>
+<header><h1>FOI INTERACTIVE – CRED ÎN EDUCAȚIE</h1><p>Alege modelul de foaie potrivit activității tale.</p></header>
+<div class="bar" id="main"></div>
+<div class="bar sub" id="sub"></div>
+<div class="bar"><button id="print">TIPĂREȘTE FOAIA</button></div>
+<div class="status" id="status"></div>
+<div id="view"><div id="wrap"><div id="sheet"></div></div></div>
+<script>
+const MM=96/25.4;
+const MODELS={t1:{n:'TIP I',or:false},t2:{n:'TIP II',or:false},t3:{n:'DICTANDO',or:true},t4:{n:'MATEMATICĂ',or:true}};
+let cur='t1',ori='p';
+function build(k,o){
+ const W=o==='p'?210:297,H=o==='p'?297:210;let s='';
+ const L=(x1,y1,x2,y2,c,w,d)=>{s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}"${d?` stroke-dasharray="${d}"`:''}/>`};
+ if(k==='t3'){for(let y=8;y<=H-0.5;y+=8)L(0,y,W,y,'#4a6fa5',0.2)}
+ else if(k==='t4'){
+  for(let x=8;x<W;x+=8)L(x,0,x,H,'#9cc3e6',0.18);
+  for(let y=8;y<H;y+=8)L(0,y,W,y,'#9cc3e6',0.18)}
+ else if(k==='t2'){
+  const P=16.7,g=P/3;
+  for(let i=0;i<18;i++){const y=8+i*P;
+   L(0,y,W,y,'#2f5d9e',0.25,'3.5 2.3');
+   L(15,y+g,W,y+g,'#2f5d9e',0.25);L(15,y+2*g,W,y+2*g,'#2f5d9e',0.25)}}
+ else{
+  for(let xt=1.5;xt<W+31;xt+=3.3)L(xt,0,xt-29.7,H,'#2d5a0e',0.22);
+  for(let i=0;i<15;i++){const y=12.7+i*20;
+   L(0,y,W,y,'#777',0.3,'2.6 2.6');
+   L(0,y+5.3,W,y+5.3,'#8fb0dc',0.3);L(0,y+11.9,W,y+11.9,'#8fb0dc',0.3)}}
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}mm" height="${H}mm" viewBox="0 0 ${W} ${H}" fill="none">${s}</svg>`}
+function fit(){
+ const W=ori==='p'?210:297,H=ori==='p'?297:210;
+ const av=document.getElementById('view').clientWidth-16;
+ const sc=Math.min(1,av/(W*MM));
+ const w=document.getElementById('wrap');
+ w.style.width=W*MM*sc+'px';w.style.height=H*MM*sc+'px';
+ document.getElementById('sheet').style.transform=`scale(${sc})`}
+function render(){
+ const m=MODELS[cur];if(!m.or)ori='p';
+ const W=ori==='p'?210:297,H=ori==='p'?297:210;
+ const sh=document.getElementById('sheet');
+ sh.style.width=W+'mm';sh.style.height=(H-0.5)+'mm';
+ sh.innerHTML=build(cur,ori)+'<div id="red"></div>';
+ document.getElementById('pageRule').textContent=`@page{size:A4 ${ori==='p'?'portrait':'landscape'};margin:0}`;
+ document.querySelectorAll('#main button').forEach(b=>b.classList.toggle('on',b.dataset.k===cur));
+ const sub=document.getElementById('sub');sub.style.display=m.or?'flex':'none';
+ sub.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.o===ori));
+ document.getElementById('status').textContent=`Model activ: ${m.n} – ${ori==='p'?'PORTRET (210 × 297 mm)':'LANDSCAPE (297 × 210 mm)'}`;
+ fit()}
+const main=document.getElementById('main'),sub=document.getElementById('sub');
+for(const k in MODELS){const b=document.createElement('button');b.textContent=MODELS[k].n;b.dataset.k=k;
+ b.onclick=()=>{cur=k;ori='p';render()};main.appendChild(b)}
+[['p','PORTRET'],['l','LANDSCAPE']].forEach(([o,t])=>{const b=document.createElement('button');b.textContent=t;b.dataset.o=o;
+ b.onclick=()=>{ori=o;render()};sub.appendChild(b)});
+document.getElementById('print').onclick=()=>{render();window.print()};
+addEventListener('resize',fit);
+addEventListener('beforeprint',()=>{document.getElementById('pageRule').textContent=`@page{size:A4 ${ori==='p'?'portrait':'landscape'};margin:0}`});
+render();
+</script></body></html>
